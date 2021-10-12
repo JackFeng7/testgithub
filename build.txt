@@ -1,0 +1,66 @@
+
+一.IOS打包
+
+
+1.identifiers(AppId) 主、 ANPS、 share 3项
+ 	a.勾选权限 app group 、iCloud、notification
+	b.注册后——编辑App group 、iCloud的 configure，全勾选
+		（App group—group.iai.work）
+		（iCloud—iCloud.work.iai.mobile）
+	（注意！！！Assignment注意要一致需要跟环境变量里的一致！！！不然编译的时候疯狂报不一致的错）
+	
+	统一配置(已完成)：
+	work.iai.mobile
+	work.iai.mobile.NotificationService
+	work.iai.mobile.IAIShare
+
+
+2.配置开发、发布共2项证书，为app签名(已完成统一配置)
+3.添加profiles 授权文件
+	发布环境 选择Adhoc——选择对应的AppID(identifiers)——选择发布证书（一对一）——选择允许包安装的devices
+	开发环境 选择iOS —— AppID(identifiers)——选择开发证书（一对多）——选择包安装的devices（需依赖开发者页面添加的UDID）
+
+共6个授权文件
+
+4.下载开发、生产证书（certificates），并加入到钥匙串。
+	以上为打包需要在开发者配置的步骤
+	不想配置的需要创建者导出的p12密钥，并加入到自己本地的钥匙串
+
+
+5.消除红屏
+6.安装fastlane
+	sudo gem install fastlane -NV
+	或
+	brew cask install fastlane (本地尝试发现下载的是2.28.0版本的，版本太低不适用）
+
+7.环境变量设置（执行根目录下env_var.sh文件以便fastlane脚本在环境变量中找到，并且匹配上）
+
+8.make build （超时多试几次，依赖稳定网络环境，也可设置长一点的超时时间）
+	！注意：保持分支干净，能正常checkou
+
+	过程中有让拖拽文件，请按main、notification、share的顺序，把下载好的生产环境的profiles路径拖拽进去（共三次，一次拖拽一个然后回车）
+	
+	a. error：Git repository is dirty! Please ensure the repo is in a clean state by committing/stashing/discarding all changes first.(请保持分支是 clean 的)
+
+	b. Unsupported export_method 'adhoc', must be: ["app-store", "ad-hoc", "package", "enterprise", "development", "developer-id"]
+
+	c. 如果有证书报错，使用xcode在Signing & Capabilities中导入相关证书 共6份（对应开发者6份profiles)
+
+	d. Embedded binary is not signed with the same certificate as the parent app. Verify the embedded binary target's code sign settings match the parent app's 	
+	解决：Xcode中修改BuildSettings-Code Signing Identity。把Code Signing Identity（main、share、notification三个项目）中Debug 、Release全替换成对应的开发、生产证书（第4步中的）
+
+	如果编译大部分成功，最后一步失败， 可往上寻找set 开头的一大串、蓝色的命令行，会随mac用户的不同而不一样
+
+9.查看编译完成后xcarchive保存路径，将 xcarchive-> IPA
+
+二、Android打包
+
+1. 本地生成签名密钥
+	例： likeytool -genkey -v -keystore my-release-key.keystore -alias iai-test -keyalg RSA -keysize 2048 -validity 10000 		(lanleieli本地 测试 密钥口令iaitest)
+	注意： 一旦你在 Play Store 发布了你的应用，如果想修改签名，就必须用一个不同的包名来重新发布你的应用（这样也会丢失所有的下载数和评分）。所以请务必备份好你的密钥库和密码。
+2. 设置gradle变量
+	编辑 ~/.gradle/gradle.properties（全局配置，对所有项目有效）或是项目目录/android/gradle.properties（项目配置，只对所在项目有效）
+	MYAPP_RELEASE_STORE_FILE=my-release-key.keystore
+	MYAPP_RELEASE_KEY_ALIAS=my-key-alias
+	MYAPP_RELEASE_STORE_PASSWORD=*****
+	MYAPP_RELEASE_KEY_PASSWORD=*****

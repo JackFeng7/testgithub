@@ -1,0 +1,48 @@
+参考 https://segmentfault.com/a/1190000006756321
+
+1: 安装 dnsmasq
+brew install dnsmasq
+   
+2: 修改配置
+   2.1 修改 /usr/local/etc/dnsmasq.conf
+     只保留
+     # /usr/local/sbin/dnsmasq --help 查看更多 options
+     resolv-file=/etc/resolv.conf  
+     strict-order
+     listen-address=127.0.0.1
+     addn-hosts=/etc/hosts
+     cache-size=1024
+
+   2.2 修改 /etc/resolv.conf
+   在 nameserver 列表前加入
+   nameserver 127.0.0.1
+
+
+   2.3 启动/关闭 dnsmasq
+   sudo brew services start dnsmasq
+   sudo brew services stop dnsmasq
+
+
+3: 修改本地 hosts 文件
+  # web & mobile ios, 在 android 模式下原有 webapp 与 ios 开发下的 host 绑定需要注释掉
+  # 127.0.0.1 app.ithpower.com www.ithpower.com
+
+  # mobile android, 使用 10.0.2.2 当开发机在不同网络条件下都能让 avd 找到正确的 ip
+  10.0.2.2 app.ithpower.com
+
+
+4: 通过 adb 修改 avd 的 nds 设置
+  4.1 adb 权限
+    adb root
+  4.2 进入 shell
+    adb shell
+  4.3 查看 nds 情况
+    getprop | grep dns
+  4.4 设置
+    setprop net.dns1 10.0.2.2
+    setprop net.radio0.dns1 10.0.2.2
+
+    实际上在我本机上 net.radio0.dns1 的设置才是生效的关键, 那么可以推测一下这个属性与 net.dns1 的区别, net.dns1 可能是在实际 andoid 物理机下的生效
+  4.5 重启 avd
+  4.6 重新进入 adb shell
+    ping -c 1 somedomain 查看对应 ip 是否正确
